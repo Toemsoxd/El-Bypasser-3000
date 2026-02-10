@@ -1,6 +1,6 @@
 /**
- * El Bypasser 3000 - Core Logic
- * Maneja la carga de sitios e interceptación de eventos de bloqueo.
+ * El Bypasser 3000 - Core Logic (PRO Edition)
+ * Maneja la carga de sitios e interceptación de eventos de bloqueo mediante bypass de prototipos.
  */
 
 const urlInput = document.getElementById('url-input');
@@ -9,7 +9,7 @@ const placeholder = document.getElementById('placeholder');
 const statusMsg = document.getElementById('status-msg');
 
 /**
- * Muestra mensajes de estado en la UI
+ * Muestra mensajes de estado en la UI con estilo hacker
  */
 function showStatus(text, type = 'info') {
     statusMsg.textContent = text;
@@ -38,41 +38,62 @@ function loadSite() {
 
     placeholder.style.display = 'none';
     frame.src = url;
-    showStatus('🚀 CARGANDO OBJETIVO... LISTO PARA EL BYPASS');
+    showStatus('🚀 CARGANDO OBJETIVO... LISTO PARA EL BYPASS PRO');
 }
 
 /**
- * Activa la fase de captura para detener preventDefault()
+ * Activa la fase de captura y anula el preventDefault() a nivel de prototipo
  */
 function bypassListeners() {
-    // Código que se intenta inyectar o ejecutar localmente
+    // Este código ataca la raíz del problema: la función preventDefault() misma
     const scriptStr = `
         (function() {
+            // Técnica de Fuerza Bruta: Anular preventDefault en el prototipo del Evento
+            const originalPreventDefault = Event.prototype.preventDefault;
+            Event.prototype.preventDefault = function() {
+                // Si el evento es de los que queremos liberar, ignoramos el bloqueo
+                const blockedEvents = ['contextmenu', 'copy', 'selectstart', 'dragstart'];
+                if (blockedEvents.includes(this.type)) {
+                    console.log('Bypasser 3000: Bloqueo interceptado para evento ' + this.type);
+                    return; 
+                }
+                return originalPreventDefault.apply(this, arguments);
+            };
+
+            // Aseguramos la fase de captura para detener propagación de otros listeners
             const handler = (e) => e.stopPropagation();
-            document.addEventListener('contextmenu', handler, true);
-            document.addEventListener('copy', handler, true);
-            document.addEventListener('selectstart', handler, true);
-            console.log('El Bypasser 3000 ha neutralizado los listeners.');
+            ['contextmenu', 'copy', 'selectstart'].forEach(evt => {
+                document.addEventListener(evt, handler, true);
+            });
+
+            console.log('El Bypasser 3000 PRO ha neutralizado los prototipos de bloqueo.');
         })();
     `;
     
     try {
-        // Enviar mensaje al iframe (requiere que el sitio permita comunicación)
+        // Intentar inyección en el iframe (si el origen lo permite)
         frame.contentWindow.postMessage({ type: 'unlock_scripts', code: scriptStr }, '*');
         
-        // Aplicar bypass en el nivel superior también
+        // Aplicar el bypass de prototipos localmente también
+        const originalPreventDefault = Event.prototype.preventDefault;
+        Event.prototype.preventDefault = function() {
+            if (['contextmenu', 'copy', 'selectstart'].includes(this.type)) return;
+            return originalPreventDefault.apply(this, arguments);
+        };
+
+        // Detener propagación en fase de captura
         document.addEventListener('contextmenu', e => e.stopPropagation(), true);
         document.addEventListener('copy', e => e.stopPropagation(), true);
         document.addEventListener('selectstart', e => e.stopPropagation(), true);
         
-        showStatus('🔥 BYPASS ACTIVADO. Prueba el clic derecho ahora.', 'success');
+        showStatus('🔥 BYPASS PRO ACTIVADO: Prototipos de eventos anulados.', 'success');
     } catch (e) {
-        showStatus('❌ ERROR DE ORIGEN: Usa el comando manual de la derecha.', 'error');
+        showStatus('❌ RESTRICCIÓN DE SEGURIDAD: Usa el comando manual de la consola.', 'error');
     }
 }
 
 /**
- * Fuerza la selección de texto mediante inyección de CSS
+ * Fuerza la selección de texto mediante inyección de CSS agresivo
  */
 function forceEnableCSS() {
     try {
@@ -87,9 +108,9 @@ function forceEnableCSS() {
             }
         `;
         document.head.appendChild(style);
-        showStatus('✅ CSS DESBLOQUEADO: Selección habilitada.', 'success');
+        showStatus('✅ CSS DESBLOQUEADO: Selección habilitada por fuerza bruta.', 'success');
     } catch (e) {
-        console.error("No se pudo aplicar el CSS de fuerza bruta.");
+        console.error("Error al inyectar CSS.");
     }
 }
 
